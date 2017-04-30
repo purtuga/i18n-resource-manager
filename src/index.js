@@ -1,13 +1,16 @@
-import Compose              from "common-micro-libs/src/jsutils/Compose"
-import dataStore            from "common-micro-libs/src/jsutils/dataStore"
-import objectExtend         from "common-micro-libs/src/jsutils/objectExtend"
-import getObjectPropValue   from "common-micro-libs/src/jsutils/getObjectPropValue"
+import Compose                  from "common-micro-libs/src/jsutils/Compose"
+import dataStore                from "common-micro-libs/src/jsutils/dataStore"
+import objectExtend             from "common-micro-libs/src/jsutils/objectExtend"
+import getObjectPropValue       from "common-micro-libs/src/jsutils/getObjectPropValue"
+import FetchPollyfill           from "common-micro-libs/src/jsutils/es7-fetch"
+import fetchCheckForHttpErrors  from "common-micro-libs/src/jsutils/fetchCheckForHttpErrors"
 
 //=====================================================================
 const PRIVATE           = dataStore.create();
 const DEFAULT_LOCALE    = "en-us";
 const NAVIGATOR         = navigator;
 const _toLowerCase      = Function.call.bind(String.prototype.toLowerCase);
+const fetch             = FetchPollyfill.fetch;
 
 /**
  * An i18n resource loader and storage library. Allow for widgets to
@@ -152,11 +155,58 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
     },
 
     /**
+     * Returns the current default locale.
+     *
+     * @returns {String}
+     */
+    getDefaultLocale: function(){
+        return PRIVATE.get(this).locale;
+    },
+
+    /**
      * Returns the preferred browser locale
      *
      * @return {String}
      */
-    getBrowserLocale: getBrowserLocale
+    getBrowserLocale: getBrowserLocale,
+
+    /**
+     * Loads a JSON file containing the i18n for the given locale
+
+     * @param {String} jsonFileUrl
+     * @param {String} [locale]
+     * @param {String} [options]
+     * @param {Function} [options.onLoad]
+     *  A callback function called before data is added to storage. Callback
+     *  is given the data as input. If callback returns an object, then that
+     *  new object will be stored.
+     *
+     * @return {Promise<I18nResourceManager, Error>}
+     */
+    load: function (jsonFileUrl, locale, options) {
+        let opt = objectExtend({ onLoad: null }, options);
+
+        return fetch(jsonFileUrl)
+            .then(fetchCheckForHttpErrors)
+            .then(response => response.json())
+            .then(data => {
+                let resources   = PRIVATE.get(this).resources;
+                let locale      = _toLowerCase(locale || DEFAULT_LOCALE);
+
+                if (!(locale in resources)) {
+                    resources[locale] = {};
+                }
+
+                if (opt.onLoad) {
+                    let data2 = opt.onLoad(data);
+                    if (data2) {
+                        data = data2;
+                    }
+                }
+
+                objectExtend(resources[locale], data);
+            });
+    },
 });
 
 function isTrueObject(obj) {
