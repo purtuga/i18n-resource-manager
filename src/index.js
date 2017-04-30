@@ -66,7 +66,7 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
      * @param {String} options.namespace
      *  A namespace to be retrieved under the given locale. Could be a key.path.
      *
-     * @param {String} [options.locale="en-us"]
+     * @param {String} [options.locale=this.getDefaultLocale()]
      *  The locale to retrieve. Ex. `en` or `en-us`
      *
      * @param {*} [options.default=null]
@@ -81,7 +81,7 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
     get: function(options){
         let resources   = PRIVATE.get(this).resources;
         let opt         = objectExtend({
-            locale:     "en-us",
+            locale:     "",
             namespace:  "",
             default:    null,
             original:   false
@@ -91,7 +91,11 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
             return opt.default;
         }
 
-        let response = getObjectPropValue(resources, `${ _toLowerCase(opt.locale || DEFAULT_LOCALE) }.${ opt.namespace }`);
+        if (!opt.locale) {
+            opt.locale = _toLowerCase(this.getDefaultLocale() || DEFAULT_LOCALE);
+        }
+
+        let response = getObjectPropValue(resources, `${ opt.locale }.${ opt.namespace }`);
 
         if (!response) {
             return opt.default;
@@ -191,10 +195,10 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
             .then(response => response.json())
             .then(data => {
                 let resources   = PRIVATE.get(this).resources;
-                let locale      = _toLowerCase(locale || DEFAULT_LOCALE);
+                let localeCode  = _toLowerCase(locale || DEFAULT_LOCALE);
 
-                if (!(locale in resources)) {
-                    resources[locale] = {};
+                if (!(localeCode in resources)) {
+                    resources[localeCode] = {};
                 }
 
                 if (opt.onLoad) {
@@ -204,7 +208,7 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
                     }
                 }
 
-                objectExtend(resources[locale], data);
+                objectExtend(resources[localeCode], data);
             });
     },
 });
