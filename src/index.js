@@ -208,7 +208,7 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
                     }
                 }
 
-                objectExtend(resources[localeCode], data);
+                objectExtend(true, resources[localeCode], data);
             });
     },
 });
