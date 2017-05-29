@@ -102,7 +102,7 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
         }
 
         if (response && !opt.original && isTrueObject(response)) {
-            response = objectExtend(true, {}, response);
+            response = cloneJson(response);
         }
 
         return response;
@@ -151,7 +151,7 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
      * @return {Object}
      */
     toJSON: function () {
-        return JSON.parse(JSON.stringify(PRIVATE.get(this).resources));
+        return cloneJson(PRIVATE.get(this).resources);
     },
 
     setDefaultLocale: function (locale) {
@@ -219,6 +219,10 @@ function isTrueObject(obj) {
 
 function getBrowserLocale() {
     return NAVIGATOR.language || NAVIGATOR.userLanguage;
+}
+
+function cloneJson(jsonObj) {
+    return JSON.parse(JSON.stringify(jsonObj));
 }
 
 /**
