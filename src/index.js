@@ -1,4 +1,4 @@
-import Compose                  from "common-micro-libs/src/jsutils/Compose"
+import EventEmitter             from "common-micro-libs/src/jsutils/EventEmitter"
 import dataStore                from "common-micro-libs/src/jsutils/dataStore"
 import objectExtend             from "common-micro-libs/src/jsutils/objectExtend"
 import getObjectPropValue       from "common-micro-libs/src/jsutils/getObjectPropValue"
@@ -18,11 +18,13 @@ const fetch             = FetchPollyfill.fetch;
  * then load additional languages from .json files at runtime.
  *
  * @class I18nResourceManager
- * @extends Compose
+ * @extends EventEmitter
  *
  * @param {Object} options
+ *
+ * @fires I18nResourceManager#loaded
  */
-const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.prototype */{
+const I18nResourceManager = EventEmitter.extend(/** @lends I18nResourceManager.prototype */{
     init: function (options) {
         let opt = objectExtend({}, this.getFactory().defaults, options);
         let inst = {
@@ -34,7 +36,7 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
         PRIVATE.set(this, inst);
 
         this.onDestroy(function () {
-            // Destroy all Compose object
+            // Destroy all EventEmitter object
             Object.keys(inst).forEach(function (prop) {
                 if (inst[prop]) {
                     // Widgets
@@ -209,6 +211,16 @@ const I18nResourceManager = Compose.extend(/** @lends I18nResourceManager.protot
                 }
 
                 objectExtend(true, resources[localeCode], data);
+            })
+            .then(() => {
+                /**
+                 * Locale was loaded (AJAX request completed)
+                 *
+                 * @event I18nResourceManager#loaded
+                 * @type {Object}
+                 * @property {String} locale
+                 */
+                this.emit("loaded", { locale });
             });
     },
 });
